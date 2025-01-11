@@ -2,6 +2,7 @@
   "name": "my-app",
   "private": true,
   "version": "0.0.0",
+  "homepage": "https://enveloppe.krissclotilde.com",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,6 +15,7 @@
   },
   "dependencies": {
     "jspdf": "^2.5.2",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "xlsx": "^0.18.5"
   }
 }

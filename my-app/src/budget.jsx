@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { jsPDF } from "jspdf";
+import * as XLSX from "xlsx";
 import '../src/budget.css';
 
 const App = () => {
@@ -69,22 +70,88 @@ const App = () => {
         }
     };
 
-    const handleDownloadPDF = () => {
-        const doc = new jsPDF();
-        doc.setFontSize(18);
-        doc.text("Gestionnaire de Budget", 20, 20);
+    const handleExportExcel = () => {
+        const workbook = XLSX.utils.book_new();
 
+        envelopes.forEach((envelope) => {
+            const data = [
+                ["Nom de l'Enveloppe", envelope.name],
+                ["Montant Total", envelope.amount],
+                ["Historique"],
+                ["Date", "Type", "Montant"],
+                ...envelope.history.map((entry) => [entry.date, entry.type, entry.amount]),
+            ];
+
+            const worksheet = XLSX.utils.aoa_to_sheet(data);
+            XLSX.utils.book_append_sheet(workbook, worksheet, envelope.name);
+        });
+
+        XLSX.writeFile(workbook, "budget_envelopes.xlsx");
+    };
+
+    const handleExportPDF = () => {
+        const doc = new jsPDF();
+        let y = 20;
+        doc.setFontSize(18);
+        doc.text("Gestionnaire de Budget", 20, y);
+
+        y += 10;
         doc.setFontSize(12);
         envelopes.forEach((envelope, index) => {
-            const y = 30 + index * 10;
             doc.text(`${index + 1}. ${envelope.name} - ${envelope.amount} euro`, 20, y);
-            envelope.history.forEach((entry, hIndex) => {
-                const historyY = y + (hIndex + 1) * 5;
-                doc.text(`    ${entry.date} - ${entry.type}: ${entry.amount} euro`, 20, historyY);
+            y += 10;
+
+            envelope.history.forEach((entry) => {
+                doc.text(`   ${entry.date} - ${entry.type}: ${entry.amount} euro`, 20, y);
+                y += 10;
+
+                if (y > 280) { // Check if the y position is near the end of the page
+                    doc.addPage();
+                    y = 20; // Reset y position for the new page
+                }
             });
         });
 
         doc.save("budget_envelopes.pdf");
+    };
+
+    const handleImportExcel = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: "array" });
+
+            const importedEnvelopes = [];
+
+            workbook.SheetNames.forEach((sheetName) => {
+                const sheet = workbook.Sheets[sheetName];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+                if (rows.length > 0) {
+                    const name = rows[0][1] || "";
+                    const amount = parseFloat(rows[1][1]) || 0;
+                    const history = rows.slice(4).map((row) => ({
+                        date: row[0] || "",
+                        type: row[1] || "",
+                        amount: parseFloat(row[2]) || 0,
+                    }));
+
+                    importedEnvelopes.push({
+                        id: Date.now() + Math.random(),
+                        name,
+                        amount,
+                        history,
+                    });
+                }
+            });
+
+            setEnvelopes([...envelopes, ...importedEnvelopes]);
+        };
+
+        reader.readAsArrayBuffer(file);
     };
 
     return (
@@ -109,7 +176,19 @@ const App = () => {
                 <button onClick={handleAddEnvelope} style={{ padding: "0.5rem" }}>Ajouter</button>
             </div>
 
-            <button onClick={handleDownloadPDF} style={{ marginBottom: "1rem", padding: "0.5rem", backgroundColor: "#4a90e2", color: "white", border: "none", borderRadius: "5px" }}>Télécharger PDF</button>
+            <div style={{ marginBottom: "1rem" }}>
+                <label htmlFor="importFile" style={{ marginRight: "0.5rem" }}>Importer un fichier Excel:</label>
+                <input
+                    type="file"
+                    id="importFile"
+                    accept=".xlsx, .xls"
+                    onChange={handleImportExcel}
+                    style={{ padding: "0.5rem" }}
+                />
+            </div>
+
+            <button onClick={handleExportExcel} style={{ marginBottom: "1rem", padding: "0.5rem", backgroundColor: "#4caf50", color: "white", border: "none", borderRadius: "5px" }}>Exporter en Excel</button>
+            <button onClick={handleExportPDF} style={{ marginBottom: "1rem", padding: "0.5rem", backgroundColor: "#2196f3", color: "white", border: "none", borderRadius: "5px" }}>Exporter en PDF</button>
 
             <ul style={{ listStyleType: "none", padding: 0 }}>
                 {envelopes.map((envelope) => (
