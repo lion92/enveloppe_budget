@@ -2,7 +2,20 @@ import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { jsPDF } from "jspdf";
 import * as XLSX from "xlsx";
+import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import html2canvas from 'html2canvas';
 import '../src/budget.css';
+
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend
+);
 
 const App = () => {
     const [envelopes, setEnvelopes] = useState(() => {
@@ -10,7 +23,7 @@ const App = () => {
         if (savedEnvelopes) {
             return JSON.parse(savedEnvelopes).map(envelope => ({
                 ...envelope,
-                history: envelope.history || [] // Assurer que l'historique existe
+                history: envelope.history || []
             }));
         }
         return [];
@@ -89,32 +102,6 @@ const App = () => {
         XLSX.writeFile(workbook, "budget_envelopes.xlsx");
     };
 
-    const handleExportPDF = () => {
-        const doc = new jsPDF();
-        let y = 20;
-        doc.setFontSize(18);
-        doc.text("Gestionnaire de Budget", 20, y);
-
-        y += 10;
-        doc.setFontSize(12);
-        envelopes.forEach((envelope, index) => {
-            doc.text(`${index + 1}. ${envelope.name} - ${envelope.amount} euro`, 20, y);
-            y += 10;
-
-            envelope.history.forEach((entry) => {
-                doc.text(`   ${entry.date} - ${entry.type}: ${entry.amount} euro`, 20, y);
-                y += 10;
-
-                if (y > 280) { // Check if the y position is near the end of the page
-                    doc.addPage();
-                    y = 20; // Reset y position for the new page
-                }
-            });
-        });
-
-        doc.save("budget_envelopes.pdf");
-    };
-
     const handleImportExcel = (event) => {
         const file = event.target.files[0];
         if (!file) return;
@@ -152,6 +139,81 @@ const App = () => {
         };
 
         reader.readAsArrayBuffer(file);
+    };
+
+    const handleExportPDF = async () => {
+        const doc = new jsPDF();
+        let y = 20;
+
+        doc.setFontSize(18);
+        doc.text("Gestionnaire de Budget", 20, y);
+        y += 10;
+
+        for (const envelope of envelopes) {
+            // Ajouter les détails de l'enveloppe
+            doc.setFontSize(12);
+            doc.text(`${envelope.name} - ${envelope.amount} euro`, 20, y);
+            y += 10;
+
+            // Ajouter l'historique
+            for (const entry of envelope.history) {
+                doc.text(`   ${entry.date} - ${entry.type}: ${entry.amount} euro`, 20, y);
+                y += 10;
+
+                if (y > 280) {
+                    doc.addPage();
+                    y = 20;
+                }
+            }
+
+            // Capturer le graphique
+            const chartElement = document.querySelector(`#chart-${envelope.id}`);
+            if (chartElement) {
+                try {
+                    const canvas = await html2canvas(chartElement);
+                    const imgData = canvas.toDataURL("image/png");
+                    doc.addImage(imgData, "PNG", 15, y, 180, 100);
+                    y += 110;
+
+                    if (y > 280) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                } catch (error) {
+                    console.error("Erreur lors de la capture du graphique :", error);
+                }
+            }
+        }
+
+        doc.save("budget_envelopes_with_charts.pdf");
+    };
+
+    const generateChartData = (history, initialAmount) => {
+        const labels = history.map((entry) => entry.date);
+        const data = history.reduce(
+            (acc, entry) => {
+                const prevAmount = acc.length > 0 ? acc[acc.length - 1] : initialAmount;
+                const updatedAmount = entry.type === "Ajout"
+                    ? prevAmount + entry.amount
+                    : prevAmount - entry.amount;
+                acc.push(updatedAmount);
+                return acc;
+            },
+            [initialAmount] // Inclure le montant initial
+        );
+
+        return {
+            labels,
+            datasets: [
+                {
+                    label: "Montant Final",
+                    data,
+                    fill: false,
+                    borderColor: "#4caf50",
+                    tension: 0.1,
+                },
+            ],
+        };
     };
 
     return (
@@ -204,6 +266,9 @@ const App = () => {
                         }}
                     >
                         <span>{envelope.name} - {envelope.amount} euro</span>
+                        <div id={`chart-${envelope.id}`} style={{ marginTop: "1rem" }}>
+                            <Line data={generateChartData(envelope.history, envelope.amount)} />
+                        </div>
                         <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
                             <input
                                 type="number"
