@@ -1,99 +1,172 @@
+/* General Styles */
 body {
-    font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #f3f4f7, #e3e8ef);
-    color: #333;
     margin: 0;
-    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    background-color: #f7f9fc;
+    color: #333;
 }
 
-h1 {
-    text-align: center;
+/* Budget Manager Container */
+.budget-manager {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Title */
+.title {
+    font-size: 28px;
+    font-weight: bold;
     color: #4a90e2;
+    text-align: center;
     margin-bottom: 20px;
-    font-size: 2rem;
 }
 
-div {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+/* Form Container */
+.form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
 }
 
-input {
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 10px;
-    font-size: 1rem;
-    transition: all 0.3s ease;
+.input,
+.select {
+    flex: 1;
+    min-width: 200px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    background-color: #f9f9f9;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s, border-color 0.3s;
 }
 
-input:focus {
+.input:focus,
+.select:focus {
     border-color: #4a90e2;
-    outline: none;
     box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
+    outline: none;
 }
 
-button {
-    background-color: #4a90e2;
+/* Buttons */
+.add-button,
+.export-button,
+.delete-button {
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: bold;
     color: #fff;
+    background-color: #4a90e2;
     border: none;
-    border-radius: 5px;
-    padding: 10px 15px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: background-color 0.3s, box-shadow 0.3s;
 }
 
-button:hover {
+.add-button:hover,
+.export-button:hover,
+.delete-button:hover {
     background-color: #357abd;
-    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(74, 144, 226, 0.2);
 }
 
-button:active {
-    transform: scale(1);
+.delete-button {
+    background-color: #e74c3c;
 }
 
-ul {
+.delete-button:hover {
+    background-color: #c0392b;
+}
+
+/* Salary History Section */
+.salary-history {
+    margin: 20px 0;
+}
+
+.salary-history h2 {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.salary-history ul {
     list-style-type: none;
     padding: 0;
     margin: 0;
 }
 
-li {
-    background-color: #fff;
-    margin-bottom: 15px;
-    padding: 15px;
+.salary-history ul li {
+    padding: 12px;
+    margin-bottom: 8px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
     border-radius: 8px;
-    border-left: 5px solid #4a90e2;
-    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-li:hover {
-    transform: translateY(-5px);
+/* Envelope List */
+.envelope-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
 }
 
-li span {
+.envelope-item {
+    padding: 16px;
+    margin-bottom: 12px;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s;
+}
+
+.envelope-item:hover {
+    transform: translateY(-4px);
+}
+
+.envelope-item strong {
+    font-size: 16px;
     font-weight: bold;
-    font-size: 1.1rem;
+    color: #333;
 }
 
-li h4 {
-    color: #555;
-    margin-top: 15px;
-}
-
-li ul {
-    margin-top: 10px;
-}
-
-li ul li {
-    font-size: 0.9rem;
+.envelope-item small {
+    display: block;
+    font-size: 14px;
     color: #666;
+    margin-top: 8px;
 }
 
-.container {
-    background: #fff;
-    border-radius: 10px;
-    padding: 20px;
-    margin: 20px auto;
-    max-width: 600px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+/* Transactions Section */
+.envelope-item ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    margin: 12px 0;
+}
+
+.envelope-item ul li {
+    font-size: 14px;
+    color: #444;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .form {
+        flex-direction: column;
+    }
+
+    .input,
+    .select,
+    .add-button,
+    .export-button {
+        width: 100%;
+        margin-bottom: 12px;
+    }
 }
