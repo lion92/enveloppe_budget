@@ -274,6 +274,32 @@ const BudgetManager = () => {
 
     const filteredEnvelopes = applyFilters();
 
+    // Supprimer un salaire
+    const deleteSalary = (index) => {
+        const confirmation = window.confirm(
+            "Êtes-vous sûr de vouloir supprimer ce salaire ?"
+        );
+        if (confirmation) {
+            const salaryToDelete = salaryHistory[index];
+            const updatedSalaryHistory = [...salaryHistory];
+            updatedSalaryHistory.splice(index, 1); // Supprimer le salaire
+
+            // Ajuster le salaire restant
+            setRemainingSalary(remainingSalary - salaryToDelete.amount);
+            setSalaryHistory(updatedSalaryHistory);
+        }
+    };
+
+    // Réinitialiser le solde restant
+    const resetRemainingSalary = () => {
+        const confirmation = window.confirm(
+            "Êtes-vous sûr de vouloir réinitialiser le solde restant à zéro ?"
+        );
+        if (confirmation) {
+            setRemainingSalary(0);
+        }
+    };
+
     return (
         <div className="budget-manager">
             <h1 className="title">Gestion des Enveloppes</h1>
@@ -298,9 +324,15 @@ const BudgetManager = () => {
                     Ajouter un salaire
                 </button>
                 <p>Salaire restant : {remainingSalary.toFixed(2)} €</p>
+
+                <p>Salaire restant : {remainingSalary.toFixed(2)} €</p>
+                <button onClick={resetRemainingSalary} className="reset-button">
+                    Réinitialiser le solde
+                </button>
                 <button onClick={exportSalariesToExcel} className="export-button">
                     Exporter les Salaires en Excel
                 </button>
+
             </div>
 
             {/* Historique des salaires */}
@@ -310,6 +342,9 @@ const BudgetManager = () => {
                     {salaryHistory.map((entry, index) => (
                         <li key={index}>
                             {entry.date} : {entry.amount.toFixed(2)} €
+                            <button onClick={() => deleteSalary(index)} className="delete-button">
+                                Supprimer
+                            </button>
                         </li>
                     ))}
                 </ul>
