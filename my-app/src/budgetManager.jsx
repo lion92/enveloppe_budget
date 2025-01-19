@@ -9,15 +9,18 @@ const BudgetManager = () => {
     const [filterName, setFilterName] = useState("");
     const [filterAmount, setFilterAmount] = useState("");
     const [filterCondition, setFilterCondition] = useState("greater");
+    const [filterStartDate, setFilterStartDate] = useState("");
+    const [filterEndDate, setFilterEndDate] = useState("");
     const [salary, setSalary] = useState(0);
     const [remainingSalary, setRemainingSalary] = useState(0);
     const [salaryDate, setSalaryDate] = useState("");
     const [salaryHistory, setSalaryHistory] = useState([]);
-    const [amountToAllocate, setAmountToAllocate] = useState("");
-    const [selectedEnvelopeId, setSelectedEnvelopeId] = useState("");
     const [transactionAmount, setTransactionAmount] = useState("");
     const [transactionDate, setTransactionDate] = useState("");
     const [transactionType, setTransactionType] = useState("add");
+    const [impactSalary, setImpactSalary] = useState(false);
+    const [impactSalaryOnCreate, setImpactSalaryOnCreate] = useState(false);
+    const [selectedEnvelopeId, setSelectedEnvelopeId] = useState("");
 
     // Charger les données depuis le localStorage au démarrage
     useEffect(() => {
@@ -72,11 +75,23 @@ const BudgetManager = () => {
             return;
         }
 
+        const initialBalanceValue = parseFloat(initialBalance);
+
+        if (impactSalaryOnCreate) {
+            if (initialBalanceValue > remainingSalary) {
+                alert(
+                    "Le salaire restant est insuffisant pour allouer ce montant à l'enveloppe !"
+                );
+                return;
+            }
+            setRemainingSalary(remainingSalary - initialBalanceValue);
+        }
+
         const newEnvelope = {
             id: Date.now(),
             name: envelopeName,
-            balance: parseFloat(initialBalance),
-            createdDate: new Date().toLocaleDateString(),
+            balance: initialBalanceValue,
+            createdDate: new Date().toLocaleDateString("fr-CA"),
             transactions: [], // Historique des transactions (ajouts/retraits)
         };
 
@@ -111,13 +126,20 @@ const BudgetManager = () => {
                     return envelope;
                 }
 
-                // Mettre à jour le solde global si transaction liée au salaire
-                const updatedRemainingSalary =
-                    transactionType === "add"
-                        ? remainingSalary - transactionValue
-                        : remainingSalary + transactionValue;
+                // Si l'option "impactSalary" est activée, ajuster le salaire restant
+                if (impactSalary) {
+                    const updatedRemainingSalary =
+                        transactionType === "add"
+                            ? remainingSalary - transactionValue
+                            : remainingSalary + transactionValue;
 
-                setRemainingSalary(updatedRemainingSalary);
+                    if (updatedRemainingSalary < 0) {
+                        alert("Le salaire restant est insuffisant pour cette opération !");
+                        return envelope;
+                    }
+
+                    setRemainingSalary(updatedRemainingSalary);
+                }
 
                 return {
                     ...envelope,
@@ -144,6 +166,17 @@ const BudgetManager = () => {
 
     // Supprimer une enveloppe
     const deleteEnvelope = (id) => {
+        const envelopeToDelete = envelopes.find((envelope) => envelope.id === id);
+
+        if (envelopeToDelete && envelopeToDelete.balance > 0) {
+            alert(
+                `Impossible de supprimer l'enveloppe "${envelopeToDelete.name}" car elle contient un montant de ${envelopeToDelete.balance.toFixed(
+                    2
+                )} €. Veuillez vider son solde avant de la supprimer.`
+            );
+            return;
+        }
+
         const updatedEnvelopes = envelopes.filter((envelope) => envelope.id !== id);
         setEnvelopes(updatedEnvelopes);
     };
@@ -181,6 +214,20 @@ const BudgetManager = () => {
                 default:
                     break;
             }
+        }
+
+        // Filtrer par date de création
+        if (filterStartDate || filterEndDate) {
+            filteredEnvelopes = filteredEnvelopes.filter((envelope) => {
+                const envelopeDate = new Date(envelope.createdDate);
+                const startDate = filterStartDate ? new Date(filterStartDate) : null;
+                const endDate = filterEndDate ? new Date(filterEndDate) : null;
+
+                if (startDate && envelopeDate < startDate) return false;
+                if (endDate && envelopeDate > endDate) return false;
+
+                return true;
+            });
         }
 
         return filteredEnvelopes;
@@ -284,6 +331,14 @@ const BudgetManager = () => {
                     onChange={(e) => setInitialBalance(e.target.value)}
                     className="input"
                 />
+                <label className="checkbox-label">
+                    <input
+                        type="checkbox"
+                        checked={impactSalaryOnCreate}
+                        onChange={(e) => setImpactSalaryOnCreate(e.target.checked)}
+                    />
+                    Impacter le salaire restant
+                </label>
                 <button onClick={createEnvelope} className="add-button">
                     Créer une enveloppe
                 </button>
@@ -325,6 +380,14 @@ const BudgetManager = () => {
                     <option value="add">Ajouter</option>
                     <option value="remove">Retirer</option>
                 </select>
+                <label className="checkbox-label">
+                    <input
+                        type="checkbox"
+                        checked={impactSalary}
+                        onChange={(e) => setImpactSalary(e.target.checked)}
+                    />
+                    Impacter le salaire restant
+                </label>
                 <button onClick={handleTransaction} className="add-button">
                     Valider
                 </button>
@@ -355,6 +418,20 @@ const BudgetManager = () => {
                     <option value="less">Inférieur à</option>
                     <option value="equal">Égal à</option>
                 </select>
+                <input
+                    type="date"
+                    placeholder="Date de début"
+                    value={filterStartDate}
+                    onChange={(e) => setFilterStartDate(e.target.value)}
+                    className="input"
+                />
+                <input
+                    type="date"
+                    placeholder="Date de fin"
+                    value={filterEndDate}
+                    onChange={(e) => setFilterEndDate(e.target.value)}
+                    className="input"
+                />
                 <button onClick={exportEnvelopesToExcel} className="export-button">
                     Exporter les Enveloppes en Excel
                 </button>
@@ -396,3 +473,4 @@ const BudgetManager = () => {
 };
 
 export default BudgetManager;
+``
