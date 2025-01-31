@@ -83,3 +83,16 @@ body {
 .envelope-item:last-child {
   border-bottom: none;
 }
+.undo-button {
+  background-color: #f39c12;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  margin-top: 5px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.undo-button:hover {
+  background-color: #e67e22;
+}
